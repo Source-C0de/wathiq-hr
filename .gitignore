@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 .streamlit/secrets.toml
+.puku/
 
 # Python
 __pycache__/
