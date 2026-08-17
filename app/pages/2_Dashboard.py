@@ -13,10 +13,10 @@ sys.path.insert(0, str(ROOT))
 
 from monitoring import db as mdb  # noqa: E402
 
-st.set_page_config(page_title="Dashboard · HRAI", page_icon="📊", layout="wide")
+st.set_page_config(page_title="Dashboard · Wathiq HR", page_icon="WH", layout="wide")
 mdb.init_db()
 
-st.title("📊 Monitoring dashboard")
+st.title("Monitoring dashboard")
 
 metrics = mdb.fetch_metrics()
 c1, c2, c3, c4 = st.columns(4)
@@ -63,11 +63,11 @@ if lat_rows:
         use_container_width=True,
     )
 
-# 4) Thumbs up vs down (bar)
+# 4) Helpful vs not helpful (bar)
 fb_df = pd.DataFrame(
     [
-        {"rating": "👍", "n": metrics["thumbs_up"]},
-        {"rating": "👎", "n": metrics["thumbs_down"]},
+        {"rating": "Helpful", "n": metrics["thumbs_up"]},
+        {"rating": "Not helpful", "n": metrics["thumbs_down"]},
     ]
 )
 st.subheader("4. Feedback ratio")
@@ -121,6 +121,6 @@ if rate_rows:
     )
 
 st.caption(
-    "Charts regenerate from `monitoring/hrai.db` on each reload. Logs are "
+    "Charts regenerate from `monitoring/wathiq.db` on each reload. Logs are "
     "written by the Streamlit chat UI and the FastAPI service."
 )

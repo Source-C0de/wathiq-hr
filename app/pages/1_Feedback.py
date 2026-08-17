@@ -11,10 +11,10 @@ sys.path.insert(0, str(ROOT))
 
 from monitoring import db as mdb  # noqa: E402
 
-st.set_page_config(page_title="Feedback · HRAI", page_icon="💬", layout="wide")
+st.set_page_config(page_title="Feedback · Wathiq HR", page_icon="WH", layout="wide")
 mdb.init_db()
 
-st.title("💬 Feedback")
+st.title("Feedback")
 st.write(
     "Rate recent answers and add comments. This data drives the monitoring "
     "dashboard and helps us improve retrieval quality."
@@ -40,17 +40,21 @@ else:
                     (r["id"],),
                 ).fetchone()
             if existing:
-                st.success(
-                    f"Recorded: {'👍' if existing['rating'] > 0 else '👎'} "
-                    + (f" — _{existing['comment']}_" if existing["comment"] else "")
-                )
+                label = "Helpful" if existing["rating"] > 0 else "Not helpful"
+                note = f" — _{existing['comment']}_" if existing["comment"] else ""
+                st.success(f"Recorded: {label}{note}")
             else:
                 cols = st.columns([1, 4, 1])
                 with cols[0]:
-                    rating = st.radio("Rating", ["👍", "👎"], key=f"r_{r['id']}", horizontal=True)
+                    rating = st.radio(
+                        "Rating",
+                        ["Helpful", "Not helpful"],
+                        key=f"r_{r['id']}",
+                        horizontal=True,
+                    )
                 with cols[1]:
                     comment = st.text_input("Comment (optional)", key=f"c_{r['id']}")
                 with cols[2]:
                     if st.button("Save", key=f"s_{r['id']}"):
-                        mdb.add_feedback(r["id"], +1 if rating == "👍" else -1, comment or None)
+                        mdb.add_feedback(r["id"], +1 if rating == "Helpful" else -1, comment or None)
                         st.success("Saved.")

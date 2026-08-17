@@ -1,7 +1,7 @@
-"""CLI entrypoint: `python ingest/run_pipeline.py [--reset] [--limit N]`.
+"""CLI entrypoint: `python ingest/run_pipeline.py [--reset]`.
 
 Drops the Qdrant collection when `--reset` is passed, then runs the full
-extract -> chunk -> embed -> load pipeline.
+extract -> chunk -> (embed via dlt) -> load pipeline.
 """
 from __future__ import annotations
 
@@ -11,7 +11,6 @@ import sys
 
 from dotenv import load_dotenv
 from qdrant_client import QdrantClient
-from qdrant_client.http import models as qm
 
 
 def reset_collection(client: QdrantClient, name: str) -> None:
@@ -23,16 +22,15 @@ def reset_collection(client: QdrantClient, name: str) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run HRAI ingest pipeline")
+    parser = argparse.ArgumentParser(description="Run Wathiq HR ingest pipeline")
     parser.add_argument("--reset", action="store_true", help="Drop collection first")
-    parser.add_argument("--limit", type=int, default=None, help="Cap chunks for smoke test")
     args = parser.parse_args()
 
     load_dotenv()
 
     host = os.getenv("QDRANT_HOST", "localhost")
     port = int(os.getenv("QDRANT_PORT", "6333"))
-    collection = os.getenv("QDRANT_COLLECTION", "hrai_saudi_labour_law")
+    collection = os.getenv("QDRANT_COLLECTION", "wathiq_hr_law")
 
     client = QdrantClient(host=host, port=port, timeout=60.0)
     if args.reset:
@@ -42,18 +40,9 @@ def main() -> int:
     from ingest.load_law import build_pipeline, chunks_resource  # noqa: E402
 
     pipeline = build_pipeline()
-    # chunks_resource is now a proper generator; dlt will consume it lazily.
-    # For smoke-test limiting we wrap with islice (capped by --limit).
-    source = chunks_resource()
-    if args.limit:
-        from itertools import islice
-
-        def _capped():
-            yield from islice(source, args.limit)
-
-        source = _capped()
-
-    load_info = pipeline.run(source)
+    # dlt consumes the resource lazily. The qdrant destination produces the
+    # embeddings itself (BAAI/bge-small-en, 384-dim) from the `text` field.
+    load_info = pipeline.run(chunks_resource())
     print(load_info)
     return 0
 

@@ -1,6 +1,6 @@
 # Docker setup
 
-This folder defines how to run HRAI end-to-end with Docker Compose.
+This folder defines how to run Wathiq HR end-to-end with Docker Compose.
 
 ## Services
 

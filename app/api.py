@@ -24,7 +24,7 @@ from monitoring import db as mdb  # noqa: E402
 load_dotenv()
 mdb.init_db()
 
-app = FastAPI(title="HRAI – Saudi Labour Law API", version="0.1.0")
+app = FastAPI(title="Wathiq HR – Saudi Labour Law API", version="0.1.0")
 
 
 class AskRequest(BaseModel):

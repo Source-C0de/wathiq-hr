@@ -1,11 +1,10 @@
-"""Streamlit chat UI for HRAI – Saudi Labour Law Assistant.
+"""Streamlit chat UI for Wathiq HR — Saudi Labour Law Assistant.
 
 Run from the repo root:
     streamlit run app/Home.py
 """
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
@@ -24,14 +23,14 @@ load_dotenv()
 mdb.init_db()
 
 st.set_page_config(
-    page_title="HRAI – Saudi Labour Law Assistant",
-    page_icon="📜",
+    page_title="Wathiq HR — Saudi Labour Law Assistant",
+    page_icon="WH",
     layout="wide",
 )
 
 # --- Sidebar ---------------------------------------------------------------
 with st.sidebar:
-    st.title("HRAI")
+    st.markdown("## Wathiq HR")
     st.caption("Saudi Labour Law · HR · Employee Rights")
     lang = st.selectbox("Language / اللغة", options=["en", "ar"], index=0)
     top_k = st.slider("Top-k passages", min_value=3, max_value=10, value=5)
@@ -51,7 +50,7 @@ with st.sidebar:
             st.session_state.setdefault("pending", []).append(ex)
 
 # --- Header ----------------------------------------------------------------
-st.title("📜 HRAI – Saudi Labour Law Assistant")
+st.title("Wathiq HR — Saudi Labour Law Assistant")
 st.write(
     "Ask plain-language questions about the Saudi Labour Law, HR policy, "
     "and employee rights. Answers are grounded in official sources and "
@@ -83,11 +82,11 @@ for msg in st.session_state["messages"]:
         if msg["role"] == "assistant" and msg.get("log_id"):
             cols = st.columns(2)
             with cols[0]:
-                if st.button("👍 Helpful", key=f"up_{msg['log_id']}"):
+                if st.button("Helpful", key=f"up_{msg['log_id']}"):
                     mdb.add_feedback(msg["log_id"], +1)
                     st.success("Thanks for the feedback!")
             with cols[1]:
-                if st.button("👎 Not helpful", key=f"dn_{msg['log_id']}"):
+                if st.button("Not helpful", key=f"dn_{msg['log_id']}"):
                     mdb.add_feedback(msg["log_id"], -1)
                     st.info("Feedback recorded.")
 

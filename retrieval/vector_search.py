@@ -1,12 +1,22 @@
-"""Dense retrieval against the Qdrant collection."""
+"""Dense retrieval against the Qdrant collection.
+
+Embeddings are produced by the same model used by the dlt qdrant destination
+at ingest time: ``BAAI/bge-small-en`` (384-dim, fastembed). Keeping the
+embedding model identical to the one used at ingest ensures the vector
+dimensions match and the cosine similarity is meaningful.
+"""
 from __future__ import annotations
 
 import os
 from typing import Any
 
-from openai import OpenAI
+from fastembed import TextEmbedding
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qm
+
+
+_VECTOR_NAME = "fast-bge-small-en"
+_EMBED_MODEL = "BAAI/bge-small-en"
 
 
 def _client() -> QdrantClient:
@@ -15,18 +25,32 @@ def _client() -> QdrantClient:
     return QdrantClient(host=host, port=port, timeout=60.0)
 
 
+_ENCODER: TextEmbedding | None = None
+
+
+def _model() -> TextEmbedding:
+    global _ENCODER
+    if _ENCODER is not None:
+        return _ENCODER
+    _ENCODER = TextEmbedding(model_name=_EMBED_MODEL)
+    return _ENCODER
+
+
 def _embed(query: str) -> list[float]:
-    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-    model = os.getenv("OPENAI_EMBED_MODEL", "text-embedding-3-small")
-    resp = client.embeddings.create(model=model, input=[query])
-    return resp.data[0].embedding
+    model = _model()
+    # fastembed returns a generator; take the first (and only) embedding.
+    vec = next(iter(model.embed([query])))
+    return vec.tolist()
 
 
 def search(query: str, top_k: int = 5, language: str | None = None) -> list[dict[str, Any]]:
     qclient = _client()
-    collection = os.getenv("QDRANT_COLLECTION", "hrai_saudi_labour_law")
+    # dlt's qdrant destination creates the actual collection as
+    # `{dataset}_{resource_name}` — for our `chunks` resource that's
+    # `wathiq_hr_law_chunks`.
+    base = os.getenv("QDRANT_COLLECTION", "wathiq_hr_law")
+    collection = f"{base}_chunks"
 
-    # If the KB has never been ingested, return empty so the chat still works.
     try:
         qclient.get_collection(collection_name=collection)
     except Exception:
@@ -40,7 +64,7 @@ def search(query: str, top_k: int = 5, language: str | None = None) -> list[dict
 
     hits = qclient.search(
         collection_name=collection,
-        query_vector=vector,
+        query_vector=(_VECTOR_NAME, vector),
         limit=top_k,
         query_filter=flt,
         with_payload=True,

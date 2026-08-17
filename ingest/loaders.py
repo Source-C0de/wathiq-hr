@@ -27,8 +27,11 @@ class Document:
 
 
 _ARABIC_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+# Strip markdown bold (`**` / `__`) and any other leading formatting so the
+# article-number regex works on lines like `**Article 109.** The worker…`
+# as well as plain `Article 109.` lines.
 _ARTICLE_RX = re.compile(
-    r"(?im)^\s*(?:المادة|Article|Art\.?)\s*([0-9٠-٩]{1,4})\b"
+    r"(?im)^\s*\**\s*(?:المادة|Article|Art\.?)\s*([0-9٠-٩]{1,4})\b"
 )
 
 

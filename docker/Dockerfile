@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.6
-# HRAI – image used by app, api, and ingest services.
+# Wathiq HR – image used by app, api, and ingest services.
 # Pinned base: python 3.11 (matches requirements.txt).
 FROM python:3.11-slim
 
@@ -41,9 +41,9 @@ ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0 \
 EXPOSE 8501 8000
 
 # Run as non-root for safety.
-RUN useradd --create-home --uid 1000 hrai \
-    && chown -R hrai:hrai /app
-USER hrai
+RUN useradd --create-home --uid 1000 wathiq \
+    && chown -R wathiq:wathiq /app
+USER wathiq
 
 # Default = chat UI. Override in docker-compose for the API / ingest services.
 CMD ["streamlit", "run", "app/Home.py", "--server.port=8501", "--server.address=0.0.0.0"]

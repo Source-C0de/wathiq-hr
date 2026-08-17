@@ -1,8 +1,8 @@
-"""dlt pipeline: extract -> chunk -> embed -> load into Qdrant.
+"""dlt pipeline: extract -> chunk -> load into Qdrant.
 
-We use dlt for orchestration (resource + destination) so the ingestion step is
-auditable, resumable, and matches the LLM Zoomcamp rubric for automated
-ingestion.
+Embeddings are produced by dlt's qdrant destination itself (fastembed's
+`BAAI/bge-small-en`, 384-dim). The resource just yields plain records with a
+`text` field tagged with `VECTORIZE_HINT` so dlt knows what to embed.
 """
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from typing import Iterator
 
 import dlt
 from dlt.destinations import qdrant
-from openai import OpenAI
+from dlt.destinations.impl.qdrant.qdrant_adapter import qdrant_adapter, VECTORIZE_HINT
 
 from .chunker import Chunk, chunk_documents
 from .loaders import Document, load_file, load_sources_csv
@@ -26,17 +26,11 @@ def chunks_resource(
     sources_csv: str = "data/sources.csv",
     data_root: str = "data/raw",
 ) -> Iterator[dict]:
-    """Yield one record per chunk, embedding each via OpenAI."""
-    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-    embed_model = os.getenv("OPENAI_EMBED_MODEL", "text-embedding-3-small")
-    batch_size = int(os.getenv("EMBED_BATCH_SIZE", "32"))
-
+    """Yield one record per chunk. dlt will embed the `text` field for us."""
     sources = load_sources_csv(sources_csv)
-    pending: list[Chunk] = []
-    yielded = 0
 
-    # Count sources that actually have a file on disk — if none, abort early
-    # so dlt's `write_disposition="replace"` doesn't wipe the existing KB.
+    # If no source files are present, abort early so dlt's
+    # `write_disposition="replace"` doesn't wipe the existing KB.
     available = [s for s in sources if s.get("file") and os.path.exists(s["file"])]
     if not available:
         print(
@@ -52,48 +46,47 @@ def chunks_resource(
             continue
 
         for doc in load_file(path, src["source_id"], src["url"]):
-            for chunk in chunk_documents([doc]):
-                pending.append(chunk)
-
-                if len(pending) >= batch_size:
-                    yield from _flush(pending, client, embed_model, yielded)
-                    yielded += len(pending)
-                    pending = []
-
-    if pending:
-        yield from _flush(pending, client, embed_model, yielded)
+            yield from chunk_documents([doc])
 
 
-def _flush(
-    pending: list[Chunk],
-    client: OpenAI,
-    model: str,
-    started: int,
-) -> Iterator[dict]:
-    """Embed a batch and yield one record per chunk. Pure generator."""
-    texts = [c.text for c in pending]
-    resp = client.embeddings.create(model=model, input=texts)
-    vectors = [d.embedding for d in resp.data]
+# Adapter marks the `text` field for dlt's qdrant destination to embed.
+chunks_resource = qdrant_adapter(
+    chunks_resource,
+    embed=["text"],
+)
 
-    for chunk, vector in zip(pending, vectors):
-        yield {
-            "chunk_id": chunk.chunk_id,
-            "source_id": chunk.source_id,
-            "article_no": chunk.article_no,
-            "language": chunk.language,
-            "text": chunk.text,
-            "url": chunk.url,
-            "page": chunk.page,
-            "token_count": chunk.token_count,
-            "vector": vector,
-        }
+
+def build_pipeline():
+    """Construct (but do not run) the dlt pipeline."""
+    collection = os.getenv("QDRANT_COLLECTION", "wathiq_hr_law")
+    qdrant_host = os.getenv("QDRANT_HOST", "localhost")
+    qdrant_port = int(os.getenv("QDRANT_PORT", "6333"))
+    location = f"http://{qdrant_host}:{qdrant_port}"
+
+    # `qdrant` destination expects `credentials={"location": ...}` in dlt 0.5.x.
+    destination = qdrant(credentials={"location": location})
+    return dlt.pipeline(
+        pipeline_name="wathiq_law_ingest",
+        destination=destination,
+        dataset_name=collection,
+        progress="log",
+    )
+
+
+if __name__ == "__main__":
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    pipeline = build_pipeline()
+    load_info = pipeline.run(chunks_resource())
+    print(load_info)
 
 
 def build_pipeline():
     """Construct (but do not run) the dlt pipeline."""
     qdrant_host = os.getenv("QDRANT_HOST", "localhost")
     qdrant_port = int(os.getenv("QDRANT_PORT", "6333"))
-    collection = os.getenv("QDRANT_COLLECTION", "hrai_saudi_labour_law")
+    collection = os.getenv("QDRANT_COLLECTION", "wathiq_hr_law")
 
     # dlt's qdrant destination expects a credentials dict with `location`.
     # Passing a bare string here leaves `location=None`, so the underlying
@@ -101,7 +94,7 @@ def build_pipeline():
     location = f"http://{qdrant_host}:{qdrant_port}"
     destination = qdrant(credentials={"location": location})
     return dlt.pipeline(
-        pipeline_name="hrai_law_ingest",
+        pipeline_name="wathiq_law_ingest",
         destination=destination,
         dataset_name=collection,
         progress="log",

@@ -33,8 +33,13 @@ class ChunkRecord:
 def _qdrant() -> tuple[QdrantClient, str]:
     host = os.getenv("QDRANT_HOST", "localhost")
     port = int(os.getenv("QDRANT_PORT", "6333"))
-    collection = os.getenv("QDRANT_COLLECTION", "hrai_saudi_labour_law")
-    return QdrantClient(host=host, port=port, timeout=60.0), collection
+    # dlt's qdrant destination creates the actual collection as
+    # `{dataset}_{resource_name}` — for our `chunks` resource that's
+    # `wathiq_hr_law_chunks`. The base collection name is just dlt
+    # metadata. We target the real one.
+    collection = os.getenv("QDRANT_COLLECTION", "wathiq_hr_law")
+    chunks_collection = f"{collection}_chunks"
+    return QdrantClient(host=host, port=port, timeout=60.0), chunks_collection
 
 
 def _collection_exists(client: "QdrantClient", name: str) -> bool:
@@ -52,7 +57,7 @@ def fetch_all_chunks(cache_path: str = "data/processed/chunks.jsonl") -> list[Ch
     first ingest) instead of raising — the app should still come up.
     """
     cache = Path(cache_path)
-    if cache.exists() and not os.getenv("HRAI_REBUILD_CACHE"):
+    if cache.exists() and not os.getenv("WATHIQ_REBUILD_CACHE"):
         return [ChunkRecord(**json.loads(line)) for line in cache.read_text(encoding="utf-8").splitlines() if line.strip()]
 
     client, collection = _qdrant()

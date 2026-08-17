@@ -13,7 +13,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-DB_PATH = Path(os.getenv("HRAI_DB_PATH", "monitoring/hrai.db"))
+DB_PATH = Path(os.getenv("WATHIQ_DB_PATH", "monitoring/wathiq.db"))
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 

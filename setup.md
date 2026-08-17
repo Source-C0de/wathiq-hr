@@ -10,8 +10,8 @@
 
 ```bash
 # 1. Clone and enter the repo
-git clone https://github.com/<you>/hrai-saudi-labour-law-assistant.git
-cd hrai-saudi-labour-law-assistant
+git clone https://github.com/<you>/wathiq-hr.git
+cd wathiq-hr
 
 # 2. Configure secrets
 cp .env.example .env
@@ -73,9 +73,9 @@ python -c "from retrieval.hybrid import hybrid_search as h; print(h('How many da
 | `OPENAI_LLM_MODEL` | LLM model | `gpt-4o-mini` |
 | `QDRANT_HOST` | Qdrant host | `localhost` |
 | `QDRANT_PORT` | Qdrant port | `6333` |
-| `QDRANT_COLLECTION` | Collection name | `hrai_saudi_labour_law` |
+| `QDRANT_COLLECTION` | Collection name | `wathiq_hr_law` |
 | `EMBED_BATCH_SIZE` | Embedding batch size | `32` |
-| `HRAI_DB_PATH` | SQLite log path | `monitoring/hrai.db` |
+| `WATHIQ_DB_PATH` | SQLite log path | `monitoring/wathiq.db` |
 
 ## Troubleshooting
 

@@ -67,7 +67,7 @@ Both scripts print a small leaderboard and write JSON results to
 
 ## Monitoring data
 
-- Queries land in `monitoring/hrai.db` (table `query_logs`).
+- Queries land in `monitoring/wathiq.db` (table `query_logs`).
 - Feedback rows land in the `feedback` table.
 - Delete the file to reset all metrics.
 

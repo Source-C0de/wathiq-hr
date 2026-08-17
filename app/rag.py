@@ -40,7 +40,7 @@ class Answer:
 
 _PROMPTS: dict[str, str] = {
     "strict": (
-        "You are HRAI, a precise assistant for Saudi Labour Law, HR policy, "
+        "You are Wathiq HR, a precise assistant for Saudi Labour Law, HR policy, "
         "and employee rights. Answer ONLY using the provided context. If the "
         "context does not contain the answer, reply exactly: "
         "\"I could not find this in the provided sources.\" "
@@ -49,7 +49,7 @@ _PROMPTS: dict[str, str] = {
         "Answer in the same language as the user's question."
     ),
     "balanced": (
-        "You are HRAI, a helpful assistant for Saudi Labour Law, HR policy, "
+        "You are Wathiq HR, a helpful assistant for Saudi Labour Law, HR policy, "
         "and employee rights. Use the provided context to answer the user's "
         "question. If the context is missing the answer, say so honestly rather "
         "than guessing. Cite supporting articles/sources using markers like "

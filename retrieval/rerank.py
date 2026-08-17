@@ -23,13 +23,13 @@ def _model() -> TextCrossEncoder:
 
 
 def rerank(query: str, documents: Sequence[str], top_k: int | None = None) -> list[float]:
-    """Return a score per document. Higher is better."""
+    """Return a score per document. Higher is better.
+
+    In fastembed 0.5.x, ``TextCrossEncoder.rerank`` returns a list of floats
+    aligned with the input documents (not a list of (doc, score) tuples).
+    """
     model = _model()
-    # fastembed's TextCrossEncoder.rerank returns an iterator of (doc, score) pairs.
-    pairs = list(model.rerank(query, list(documents)))
-    # Preserve the input order regardless of how the API returns them.
-    score_by_text = {text: float(score) for text, score in pairs}
-    scores = [score_by_text.get(d, 0.0) for d in documents]
+    scores = [float(s) for s in model.rerank(query, list(documents))]
     if top_k is not None:
         scores = scores[:top_k]
     return scores

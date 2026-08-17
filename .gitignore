@@ -175,7 +175,7 @@ __marimo__/
 .DS_Store
 Thumbs.db
 
-# HRAI local data + indexes (rebuilt by ingest pipeline)
+# Wathiq HR local data + indexes (rebuilt by ingest pipeline)
 data/raw/*.pdf
 data/raw/*.html
 data/processed/*.parquet

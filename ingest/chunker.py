@@ -19,8 +19,9 @@ _TARGET_TOKENS = 800
 _OVERLAP_TOKENS = 100
 
 _ARABIC_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+# Match `**Article 109.**` and similar markdown-bold article headers.
 _ARTICLE_RX = re.compile(
-    r"(?im)^\s*(?:المادة|Article|Art\.?)\s*([0-9٠-٩]{1,4})\b"
+    r"(?im)^\s*\**\s*(?:المادة|Article|Art\.?)\s*([0-9٠-٩]{1,4})\b"
 )
 # Sentences split on ., !, ?, or Arabic full stop (۔) / Arabic question mark (؟).
 _SENT_RX = re.compile(r"(?<=[.!?؟۔])\s+")
@@ -105,6 +106,9 @@ def chunk_documents(docs: Iterable[Document]) -> Iterable[Chunk]:
         units = _split_into_units(doc.text)
         for unit in units:
             article_no = _scan_article_no(unit) or doc.article_no
+            # qdrant payload drops None values — coerce to "" so the field
+            # always survives into the index.
+            article_no = article_no or ""
             for piece in _split_by_tokens(unit):
                 counter += 1
                 chunk_id = f"{doc.source_id}-{counter:06d}"
