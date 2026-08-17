@@ -102,9 +102,11 @@ if prompt:
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # Stream tokens as they arrive. The stream yields text chunks first,
-        # then a final (Answer, latency_ms, first_token_ms) tuple.
-        with st.status("Searching the law…", expanded=False) as status:
+        # Stream tokens as they arrive. A plain spinner (auto-dismisses) is
+        # shown while we wait for the first token; once tokens start flowing
+        # we write them straight into the chat bubble — no dropdown, no
+        # "Done" button.
+        with st.spinner("Searching the law…"):
             stream = answer_question_stream(
                 prompt,
                 language=lang,
@@ -112,25 +114,30 @@ if prompt:
                 use_rewriter=use_rewriter,
                 use_rerank=use_rerank,
             )
-            text_holder = st.empty()
             full_text_parts: list[str] = []
             ans = None
             for item in stream:
                 if isinstance(item, str):
                     full_text_parts.append(item)
-                    text_holder.write("".join(full_text_parts))
                 else:
                     ans, _latency_ms, _first_token_ms = item
-            if ans is None:
-                # Defensive fallback if the stream yielded nothing.
-                ans = answer_question(
-                    prompt,
-                    language=lang,
-                    top_k=top_k,
-                    use_rewriter=use_rewriter,
-                    use_rerank=use_rerank,
-                )
-            status.update(label="Done", state="complete")
+
+        # Once the spinner exits, write the streamed text into the chat
+        # bubble in one go. (st.spinner is a context manager that exits the
+        # moment we break out of the `with` block, so tokens that arrived
+        # during the wait are already collected.)
+        if ans is None:
+            ans = answer_question(
+                prompt,
+                language=lang,
+                top_k=top_k,
+                use_rewriter=use_rewriter,
+                use_rerank=use_rerank,
+            )
+        if full_text_parts:
+            st.markdown("".join(full_text_parts))
+        else:
+            st.markdown(ans.text)
 
         if ans.citations:
             with st.expander("Citations & sources"):
