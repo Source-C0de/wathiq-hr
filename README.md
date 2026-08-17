@@ -332,38 +332,6 @@ See [`usage.md`](./usage.md) for the full command reference.
 
 ---
 
-## Evaluation (LLM Zoomcamp Rubric)
-
-The project is scored against the official DataTalks.Club rubric:
-
-| Criterion                       | Status | Evidence                                                                 |
-| ------------------------------- | :----: | ------------------------------------------------------------------------ |
-| Problem description             |   OK   | [Why Wathiq HR?](#why-wathiq-hr) section                                 |
-| Retrieval flow (KB + LLM)       |   OK   | [Architecture](#architecture) diagram                                    |
-| Retrieval evaluation            |   OK   | [`eval/retrieval_eval.py`](./eval/retrieval_eval.py) — BM25 / dense / hybrid+rerank |
-| LLM evaluation                  |   OK   | [`eval/llm_eval.py`](./eval/llm_eval.py) — ≥3 prompt variants            |
-| Interface                       |   OK   | Streamlit UI **and** FastAPI                                             |
-| Ingestion pipeline              |   OK   | Automated via `dlt` ([`ingest/`](./ingest))                              |
-| Monitoring                      |   OK   | User feedback + 6-chart dashboard                                        |
-| Containerization                |   OK   | Full `docker-compose.yml` (qdrant + ingest + app + api)                  |
-| Reproducibility                 |   OK   | Pinned `requirements.txt`, step-by-step `setup.md`                       |
-| Best practices                  |   OK   | Hybrid search, re-ranking, query rewriting                               |
-
-Run the evaluations locally:
-
-```bash
-python eval/generate_golden.py        # writes eval/golden.csv
-python eval/retrieval_eval.py         # writes eval/results.retrieval.json
-python eval/llm_eval.py               # writes eval/results.llm.json
-```
-
-Or run everything end-to-end:
-
-```bash
-python eval/run_all.py
-```
-
----
 
 ## Monitoring & Feedback
 
