@@ -1,16 +1,26 @@
 """Optional helper: download source files declared in data/sources.csv.
 
 Only writes files that don't exist locally. Use --force to overwrite.
+
+Run from the project root with one of:
+    python -m ingest.download_sources
+    PYTHONPATH=. python ingest/download_sources.py
 """
 from __future__ import annotations
 
 import argparse
 import os
 import sys
+from pathlib import Path
 
 import requests
 
-from ingest.loaders import load_sources_csv
+# Allow `python ingest/download_sources.py` to find the `ingest` package.
+_ROOT = Path(__file__).resolve().parents[1]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
+from ingest.loaders import load_sources_csv  # noqa: E402
 
 
 def main() -> int:

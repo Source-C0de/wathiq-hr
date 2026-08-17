@@ -25,6 +25,13 @@ def _embed(query: str) -> list[float]:
 def search(query: str, top_k: int = 5, language: str | None = None) -> list[dict[str, Any]]:
     qclient = _client()
     collection = os.getenv("QDRANT_COLLECTION", "hrai_saudi_labour_law")
+
+    # If the KB has never been ingested, return empty so the chat still works.
+    try:
+        qclient.get_collection(collection_name=collection)
+    except Exception:
+        return []
+
     vector = _embed(query)
 
     flt = None

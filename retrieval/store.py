@@ -37,14 +37,29 @@ def _qdrant() -> tuple[QdrantClient, str]:
     return QdrantClient(host=host, port=port, timeout=60.0), collection
 
 
+def _collection_exists(client: "QdrantClient", name: str) -> bool:
+    try:
+        client.get_collection(collection_name=name)
+        return True
+    except Exception:
+        return False
+
+
 def fetch_all_chunks(cache_path: str = "data/processed/chunks.jsonl") -> list[ChunkRecord]:
-    """Scroll through the Qdrant collection, returning ChunkRecord list."""
+    """Scroll through the Qdrant collection, returning ChunkRecord list.
+
+    Returns an empty list if the collection doesn't exist (e.g. before the
+    first ingest) instead of raising — the app should still come up.
+    """
     cache = Path(cache_path)
     if cache.exists() and not os.getenv("HRAI_REBUILD_CACHE"):
         return [ChunkRecord(**json.loads(line)) for line in cache.read_text(encoding="utf-8").splitlines() if line.strip()]
 
     client, collection = _qdrant()
     cache.parent.mkdir(parents=True, exist_ok=True)
+
+    if not _collection_exists(client, collection):
+        return []
 
     records: list[ChunkRecord] = []
     next_offset = None

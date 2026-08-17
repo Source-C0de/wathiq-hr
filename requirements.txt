@@ -3,15 +3,19 @@
 
 # --- Core LLM + embeddings ---
 openai==1.51.0
+# httpx 0.28+ removed the `proxies` kwarg that openai 1.51.x still passes,
+# causing "Client.__init__() got an unexpected keyword argument 'proxies'".
+# Pin below 0.28 until openai is upgraded.
+httpx<0.28
 tiktoken==0.8.0
 
 # --- Vector + lexical search ---
 qdrant-client==1.12.1
 minsearch==0.0.6
-fastembed==0.4.2            # cross-encoder reranker (CPU-friendly)
+fastembed==0.5.1            # cross-encoder reranker (CPU-friendly); TextCrossEncoder was added in 0.5.0
 
 # --- Ingestion (dlt) ---
-dlt[filesystem,parquet]==0.5.11
+dlt[filesystem,parquet]==0.5.4
 pypdf==5.0.1
 beautifulsoup4==4.12.3
 lxml==5.3.0

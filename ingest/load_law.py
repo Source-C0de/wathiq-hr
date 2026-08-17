@@ -35,6 +35,16 @@ def chunks_resource(
     pending: list[Chunk] = []
     yielded = 0
 
+    # Count sources that actually have a file on disk — if none, abort early
+    # so dlt's `write_disposition="replace"` doesn't wipe the existing KB.
+    available = [s for s in sources if s.get("file") and os.path.exists(s["file"])]
+    if not available:
+        print(
+            f"[ingest] no source files found in {data_root} for {len(sources)} "
+            "entries in sources.csv — skipping ingestion to preserve existing KB."
+        )
+        return
+
     for src in sources:
         path = src["file"]
         if not path or not os.path.exists(path):
@@ -46,11 +56,12 @@ def chunks_resource(
                 pending.append(chunk)
 
                 if len(pending) >= batch_size:
-                    yielded += _flush(pending, client, embed_model, yielded)
+                    yield from _flush(pending, client, embed_model, yielded)
+                    yielded += len(pending)
                     pending = []
 
     if pending:
-        yielded += _flush(pending, client, embed_model, yielded)
+        yield from _flush(pending, client, embed_model, yielded)
 
 
 def _flush(
@@ -58,7 +69,8 @@ def _flush(
     client: OpenAI,
     model: str,
     started: int,
-) -> int:
+) -> Iterator[dict]:
+    """Embed a batch and yield one record per chunk. Pure generator."""
     texts = [c.text for c in pending]
     resp = client.embeddings.create(model=model, input=texts)
     vectors = [d.embedding for d in resp.data]
@@ -75,7 +87,6 @@ def _flush(
             "token_count": chunk.token_count,
             "vector": vector,
         }
-    return len(pending)
 
 
 def build_pipeline():
@@ -84,10 +95,11 @@ def build_pipeline():
     qdrant_port = int(os.getenv("QDRANT_PORT", "6333"))
     collection = os.getenv("QDRANT_COLLECTION", "hrai_saudi_labour_law")
 
-    destination = qdrant(
-        qdrant_location=f"http://{qdrant_host}:{qdrant_port}",
-        collection_name=collection,
-    )
+    # dlt's qdrant destination expects a credentials dict with `location`.
+    # Passing a bare string here leaves `location=None`, so the underlying
+    # QdrantClient falls back to localhost (Connection refused inside Docker).
+    location = f"http://{qdrant_host}:{qdrant_port}"
+    destination = qdrant(credentials={"location": location})
     return dlt.pipeline(
         pipeline_name="hrai_law_ingest",
         destination=destination,

@@ -42,18 +42,16 @@ def main() -> int:
     from ingest.load_law import build_pipeline, chunks_resource  # noqa: E402
 
     pipeline = build_pipeline()
+    # chunks_resource is now a proper generator; dlt will consume it lazily.
+    # For smoke-test limiting we wrap with islice (capped by --limit).
     source = chunks_resource()
     if args.limit:
-        # Wrap the resource so we can stop early during smoke tests.
-        original = source._gen  # type: ignore[attr-defined]
-        # dlt resources expose .read() that yields the records; we limit at the
-        # pipeline level instead via a small wrapper below.
         from itertools import islice
 
-        def capped() -> "Iterator[dict]":  # type: ignore[name-defined]
+        def _capped():
             yield from islice(source, args.limit)
 
-        source = capped()  # type: ignore[assignment]
+        source = _capped()
 
     load_info = pipeline.run(source)
     print(load_info)

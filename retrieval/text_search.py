@@ -16,7 +16,10 @@ def _get_index() -> Index:
         return _INDEX
     records: list[ChunkRecord] = fetch_all_chunks()
     idx = Index(text_fields=["text"], keyword_fields=["source_id", "language", "article_no"])
-    idx.fit(yield_chunks(records))
+    # Materialize the generator into a list — minsearch keeps an internal
+    # reference to the docs and re-iterates it on every search; a generator
+    # would be exhausted on the second call and raise `object has no len()`.
+    idx.fit(list(yield_chunks(records)))
     _INDEX = idx
     return idx
 
