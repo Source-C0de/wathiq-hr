@@ -1,0 +1,11 @@
+source_id,title,url,license,language,file,priority
+m51_en,Saudi Labour Law (Royal Decree M/51) - English translation,https://www.ilo.org/dyn/natlex/docs/ELECTRONIC/67446/124048/F1471057061/SA67446.pdf,ILO NatLex (public),en,data/raw/m51_en.pdf,1
+m51_ar,نظام العمل السعودي - المرسوم الملكي م/51,https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/49b7e3e7-cc55-4ed7-8d68-a09a00a6e72d,Saudi Bureau of Experts (public),ar,data/raw/m51_ar.pdf,1
+exec_reg_ar,اللائحة التنفيذية لنظام العمل,https://hrsd.gov.sa/sites/default/files/2023-07/Executive%20Regulation%20of%20Saudi%20Labour%20Law_0.pdf,Ministry of HRSD (public),ar,data/raw/exec_reg_ar.pdf,1
+gosi_faq_en,GOSI Frequently Asked Questions,https://www.gosi.gov.sa/en/FAQ,Public,en,data/raw/gosi_faq_en.html,2
+wps_en,WPS (Wage Protection System) overview,https://www.mudared.gov.sa/eng/wps,Public,en,data/raw/wps_en.html,2
+nitaqat_en,Nitaqat Band Calculator & Bands,https://www.mol.gov.sa/en/services/issue-nitaqat-certificate,Public,en,data/raw/nitaqat_en.html,3
+female_workers_en,Women in the Workplace - MHRSD regulations,https://hrsd.gov.sa/en/work-conditions,Public,en,data/raw/female_workers_en.html,3
+remote_work_ar,العمل عن بُعد - دليل صاحب العمل,https://hrsd.gov.sa/sites/default/files/Remote%20Work%20Guide.pdf,Ministry of HRSD (public),ar,data/raw/remote_work_ar.pdf,3
+hr_guide_md,Internal HR Handbook (Markdown notes),,Authored locally,en,data/raw/hr_guide.md,2
+ar_notes_md,ملاحظات الموارد البشرية (Markdown),,Authored locally,ar,data/raw/ar_notes.md,3

@@ -1,0 +1,42 @@
+# Secrets & local config
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Build / dist
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Local data + indexes (rebuilt by ingest pipeline)
+data/raw/*.pdf
+data/raw/*.html
+data/processed/*.parquet
+data/processed/*.json
+monitoring/*.db
+monitoring/*.sqlite
+monitoring/logs/
+qdrant_storage/
+*.qdrant/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Eval outputs (keep results.json, drop temp)
+eval/*.tmp
