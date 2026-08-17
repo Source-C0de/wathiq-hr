@@ -2,6 +2,17 @@
 
 fastembed 0.5+ exposes the cross-encoder at
 ``fastembed.rerank.cross_encoder.TextCrossEncoder`` (not at the top level).
+
+Default model is ``Xenova/ms-marco-MiniLM-L-6-v2`` (80 MB) — the same family
+used by the original course minsearch module. It's English-focused, ~14× faster
+than the multilingual `jinaai/jina-reranker-v2-base-multilingual` (1.1 GB),
+and produces a much faster cold start on memory-constrained deployments.
+
+Arabic queries are still served well by the BM25 leg of the hybrid retriever;
+the cross-encoder mainly re-orders the fused top candidates.
+
+Set ``WATHIQ_RERANK_MODEL=jinaai/jina-reranker-v2-base-multilingual`` if you
+want the heavier multilingual model instead.
 """
 from __future__ import annotations
 
@@ -18,7 +29,8 @@ def _model() -> TextCrossEncoder:
     global _MODEL
     if _MODEL is not None:
         return _MODEL
-    _MODEL = TextCrossEncoder(model_name="jinaai/jina-reranker-v2-base-multilingual")
+    model_name = os.getenv("WATHIQ_RERANK_MODEL", "Xenova/ms-marco-MiniLM-L-6-v2")
+    _MODEL = TextCrossEncoder(model_name=model_name)
     return _MODEL
 
 

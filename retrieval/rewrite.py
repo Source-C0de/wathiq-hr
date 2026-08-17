@@ -2,7 +2,8 @@
 expand abbreviations (e.g. EOSB, WPS, GOSI) before retrieval.
 
 Uses gpt-4o-mini; falls back to the raw query on any error so the pipeline
-stays robust.
+stays robust. The OpenAI client is cached as a module-level singleton so
+we don't re-do the TLS handshake / connection-pool warm-up on every call.
 """
 from __future__ import annotations
 
@@ -27,13 +28,22 @@ User query: {q}
 Rewritten:"""
 
 
+_CLIENT: OpenAI | None = None
+
+
+def _client() -> OpenAI:
+    global _CLIENT
+    if _CLIENT is None:
+        _CLIENT = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    return _CLIENT
+
+
 def rewrite(query: str, model: str | None = None) -> str:
     if not query.strip():
         return query
     try:
-        client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
         mdl = model or os.getenv("OPENAI_LLM_MODEL", "gpt-4o-mini")
-        resp = client.chat.completions.create(
+        resp = _client().chat.completions.create(
             model=mdl,
             messages=[{"role": "user", "content": _PROMPT.format(q=query)}],
             temperature=0.0,

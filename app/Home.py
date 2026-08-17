@@ -16,7 +16,7 @@ sys.path.insert(0, str(ROOT))
 
 from dotenv import load_dotenv  # noqa: E402
 
-from app.rag import answer_question  # noqa: E402
+from app.rag import Answer, answer_question, answer_question_stream  # noqa: E402
 from monitoring import db as mdb  # noqa: E402
 
 load_dotenv()
@@ -35,7 +35,9 @@ with st.sidebar:
     lang = st.selectbox("Language / اللغة", options=["en", "ar"], index=0)
     top_k = st.slider("Top-k passages", min_value=3, max_value=10, value=5)
     use_rerank = st.checkbox("Re-rank passages (cross-encoder)", value=True)
-    use_rewriter = st.checkbox("Rewrite query before retrieval", value=True)
+    # Rewriter is OFF by default — it adds a full OpenAI round-trip before
+    # retrieval. Most queries are handled well by the BM25+dense hybrid path.
+    use_rewriter = st.checkbox("Rewrite query before retrieval", value=False)
     st.divider()
     st.markdown("**Example questions**")
     examples_en = [
@@ -100,24 +102,45 @@ if prompt:
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner("Searching the law…"):
-            ans = answer_question(
+        # Stream tokens as they arrive. The stream yields text chunks first,
+        # then a final (Answer, latency_ms, first_token_ms) tuple.
+        with st.status("Searching the law…", expanded=False) as status:
+            stream = answer_question_stream(
                 prompt,
                 language=lang,
                 top_k=top_k,
                 use_rewriter=use_rewriter,
                 use_rerank=use_rerank,
             )
-            st.markdown(ans.text)
-            if ans.citations:
-                with st.expander("Citations & sources"):
-                    for c in ans.citations:
-                        st.markdown(
-                            f"- **{c.source_id}**"
-                            + (f", Article {c.article_no}" if c.article_no else "")
-                            + f" — [{c.url}]({c.url})"
-                        )
-                        st.caption(c.text[:240] + ("…" if len(c.text) > 240 else ""))
+            text_holder = st.empty()
+            full_text_parts: list[str] = []
+            ans = None
+            for item in stream:
+                if isinstance(item, str):
+                    full_text_parts.append(item)
+                    text_holder.write("".join(full_text_parts))
+                else:
+                    ans, _latency_ms, _first_token_ms = item
+            if ans is None:
+                # Defensive fallback if the stream yielded nothing.
+                ans = answer_question(
+                    prompt,
+                    language=lang,
+                    top_k=top_k,
+                    use_rewriter=use_rewriter,
+                    use_rerank=use_rerank,
+                )
+            status.update(label="Done", state="complete")
+
+        if ans.citations:
+            with st.expander("Citations & sources"):
+                for c in ans.citations:
+                    st.markdown(
+                        f"- **{c.source_id}**"
+                        + (f", Article {c.article_no}" if c.article_no else "")
+                        + f" — [{c.url}]({c.url})"
+                    )
+                    st.caption(c.text[:240] + ("…" if len(c.text) > 240 else ""))
 
         log_id = mdb.log_query(
             lang=lang,
